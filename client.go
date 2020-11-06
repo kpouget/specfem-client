@@ -55,7 +55,8 @@ func (c MyClient) Create(gvr schema.GroupVersionResource,  unstructuredObj *unst
 	var err error
 
 	if gvr.Resource != "storageclasses" && gvr.Resource != "persistentvolumes" {
-		_, err = client.ClientSetDyn.Resource(gvr).Namespace(NAMESPACE).Create(context.TODO(), unstructuredObj, metav1.CreateOptions{})
+		namespace := unstructuredObj.GetNamespace()
+		_, err = client.ClientSetDyn.Resource(gvr).Namespace(namespace).Create(context.TODO(), unstructuredObj, metav1.CreateOptions{})
 	} else {
 		_, err = client.ClientSetDyn.Resource(gvr).Create(context.TODO(), unstructuredObj, metav1.CreateOptions{})
 	}
