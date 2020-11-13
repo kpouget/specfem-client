@@ -37,7 +37,7 @@ func checkSpecfemConfig(app *specfemv1.SpecfemApp) error {
 	nproc := app.Spec.Exec.Nproc
 	slots := app.Spec.Exec.SlotsPerWorker
 
-	if nproc % slots != 0 {
+	if nproc > slots && nproc % slots != 0 {
 		return fmt.Errorf("NProc(=%d) must be a multiple of SlotsPerWorker(=%d)",
 			nproc, slots)
 	}

@@ -123,6 +123,9 @@ func yamlRunMpiMesherSolverJob(stage string) YamlResourceSpec {
 				stage, app.Spec.Exec.Nproc, app.Spec.Specfem.Nex)
 
 			cfg.MesherSolver.Nreplicas = int(app.Spec.Exec.Nproc/app.Spec.Exec.SlotsPerWorker)
+			if cfg.MesherSolver.Nreplicas == 0 {
+				cfg.MesherSolver.Nreplicas = 1
+			}
 
 			return cfg
 		}
