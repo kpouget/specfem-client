@@ -12,7 +12,7 @@ import (
 	errs "github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	specfemv1 "github.com/openshift-psap/specfem-client-api/pkg/apis/specfem/v1alpha1"
+	specfemv1 "github.com/openshift-psap/specfem-client/apis/specfem/v1alpha1"
 	"github.com/openshift-psap/specfem-client/yamlutil"
 
 
