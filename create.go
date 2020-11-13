@@ -18,8 +18,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"sigs.k8s.io/yaml"
 
 )
@@ -53,6 +55,9 @@ func applyTemplate(yamlSpec *[]byte, templateFct YamlResourceTmpl, app *specfemv
 		},
 		"escape": func(src, dst string, txt string) string {
 			return strings.ReplaceAll(txt, src, dst)
+		},
+		"qte" : func(qte resource.Quantity) string {
+			return qte.String()
 		},
     }
 

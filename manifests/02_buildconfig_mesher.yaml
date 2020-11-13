@@ -22,6 +22,22 @@ spec:
         value: "{{ .App.Spec.Exec.Nproc | isqrt }}"
       - name: SPECFEM_NEX
         value: "{{ .App.Spec.Specfem.Nex }}"
+      - name: SPECFEM_GPU_MODE
+        value: "{{ if eq .App.Spec.Specfem.GpuDevice ""}}.false.{{ else }}.true.{{ end }}"
+      - name: SPECFEM_GPU_PLATFORM
+        value: "{{ .App.Spec.Specfem.GpuPlatform }}"
+      - name: SPECFEM_GPU_DEVICE
+        value: "{{ .App.Spec.Specfem.GpuDevice }}"
+      - name: SPECFEM_CONFIG_GPU_FLAGS
+{{ if .App.Spec.Specfem.GpuPlatform }}
+        value: "--with-gpu --with-cuda CUDA_LIB=/usr/local/cuda/lib64/  "
+{{ else }}
+        value: ""
+{{ end }}
+{{ if .App.Spec.Specfem.GpuPlatform }}
+      - name: SPECFEM_NVCC
+        value: "NVCC=nvcc -dlink"
+{{ end }}
       from:
         kind: ImageStreamTag
         name: specfem:base

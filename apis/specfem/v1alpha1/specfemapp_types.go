@@ -2,6 +2,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+
 )
 
 // GitSpec defines the path to the git repository
@@ -23,6 +25,8 @@ type ExecSpec struct {
 // MpiSpec defines the execution conditions
 type SpecfemSpec struct {
 	Nex int32 `json:"nex"`
+	GpuPlatform string `json:"gpuPlatform",omitempty`
+	GpuDevice string `json:"gpuDevice",omitempty`
 }
 
 type NetworkType string
@@ -40,6 +44,7 @@ type ResourcesSpec struct {
 	UseUbiImage bool `json:"useUbiImage"`
 	RelyOnSharedFS bool `json:"relayOnSharedFS"`
 	NetworkType NetworkType `json:"networkType"`
+	Requests map[string]resource.Quantity `json:"requests",omitempty`
 }
 
 // SpecfemAppSpec defines the desired state of SpecfemApp

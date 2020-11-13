@@ -10,7 +10,7 @@ spec:
     dockerStrategy:
       from:
         kind: DockerImage
-        name: {{ if .App.Spec.Resources.UseUbiImage }}registry.access.redhat.com/ubi8/ubi{{ else }}docker.io/ubuntu:eoan{{ end }}
+        name: {{ .Cfg.BaseImage.Image }}
       env:
         - name: SPECFEM_GIT_REPO
           value: {{ .App.Spec.Git.Uri }}

@@ -39,6 +39,9 @@ type TemplateCfg struct {
 		Image string
 		Nreplicas int
 	}
+	BaseImage struct {
+		Image string
+	}
 }
 
 func yamlImageStream() (string, YamlResourceTmpl) {
@@ -46,7 +49,24 @@ func yamlImageStream() (string, YamlResourceTmpl) {
 }
 
 func yamlBaseImageBuildConfig() (string, YamlResourceTmpl) {
-	return "01_buildconfig_base.yaml", NoTemplateCfg
+	return "01_buildconfig_base.yaml", func(app *specfemv1.SpecfemApp) *TemplateCfg {
+		cfg := &TemplateCfg{}
+
+		var img string
+		if app.Spec.Resources.UseUbiImage {
+			if app.Spec.Specfem.GpuPlatform != "" {
+				img = "docker.io/nvidia/cuda:11.1-devel-ubi8"
+			} else {
+				img = "registry.access.redhat.com/ubi8/ubi"
+			}
+		} else {
+			img = "docker.io/ubuntu:eoan"
+		}
+
+		cfg.BaseImage.Image = img
+
+		return cfg
+	}
 }
 
 func yamlMesherImageBuildConfig() (string, YamlResourceTmpl) {

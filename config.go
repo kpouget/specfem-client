@@ -42,6 +42,15 @@ func checkSpecfemConfig(app *specfemv1.SpecfemApp) error {
 			nproc, slots)
 	}
 
+	if app.Spec.Specfem.GpuPlatform == "" && app.Spec.Specfem.GpuDevice == "" {
+		// pass, not using GPU
+	} else if app.Spec.Specfem.GpuPlatform == "" || app.Spec.Specfem.GpuDevice == "" {
+		return fmt.Errorf("app.spec.specfem.gpuPlatform (=%s) AND app.spec.specfem.gpuDevice (=%s) must be provided to use GPU mode", app.Spec.Specfem.GpuPlatform, app.Spec.Specfem.GpuDevice)
+
+	} else if len(app.Spec.Resources.Requests) == 0 {
+		return fmt.Errorf("app.spec.resources.requests cannot be empty in GPU mode")
+	}
+
 	return nil
 }
 
