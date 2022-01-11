@@ -39,13 +39,10 @@ replace (
 )
 
 require (
-	github.com/kubeflow/common v0.0.0-20200313171840-64f943084a05
-	github.com/kubeflow/mpi-operator v0.2.3
-	github.com/openshift-psap/specfem-client-api v0.0.0-20201030163614-baf05458d80e
+	github.com/kubeflow/mpi-operator v0.3.0
 	github.com/openshift/api v0.0.0-20200710154525-af4dd20aed23
 	github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
 	github.com/openshift/oc v4.2.0-alpha.0+incompatible
-	github.com/openshift/origin v0.0.0-20160503220234-8f127d736703
 	github.com/pkg/errors v0.9.1
 	k8s.io/api v0.18.5
 	k8s.io/apimachinery v0.18.5
@@ -76,9 +73,12 @@ require (
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/imdario/mergo v0.3.10 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/kubeflow/common v0.3.3 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/openshift-psap/specfem-client-api v0.0.0-20201030163614-baf05458d80e // indirect
+	github.com/openshift/origin v0.0.0-20160503220234-8f127d736703 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
 	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7 // indirect
@@ -91,7 +91,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6 // indirect
+	k8s.io/kube-openapi v0.0.0-20200410163147-594e756bea31 // indirect
 	k8s.io/utils v0.0.0-20200716102541-988ee3149bb2 // indirect
 	sigs.k8s.io/structured-merge-diff/v2 v2.0.1 // indirect
 	sigs.k8s.io/structured-merge-diff/v3 v3.0.0 // indirect
