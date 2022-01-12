@@ -1,6 +1,9 @@
 #! /bin/bash
 
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
+set -x
 
 CACHE_NAME=cache/${SPECFEM_MPI_NPROC}proc/${SPECFEM_NEX}nex/
 
@@ -13,7 +16,7 @@ fi
 if [[ "$SPECFEM_RELY_ON_SHARED_FS" == "true" ]]; then
     ln -s /mnt/shared/$CACHE_NAME/OUTPUT_FILES /app/OUTPUT_FILES
     ln -s /mnt/shared/$CACHE_NAME/DATABASES_MPI /app/DATABASES_MPI
- 
+
     mkdir -p /mnt/shared/$CACHE_NAME/{DATABASES_MPI,OUTPUT_FILES}
 else
     if [[ "$OMPI_COMM_WORLD_NODE_RANK" -eq 0 ]]; then
@@ -48,4 +51,3 @@ else
 fi
 
 echo Mesher done $OMPI_COMM_WORLD_RANK
-

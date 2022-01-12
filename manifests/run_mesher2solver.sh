@@ -15,6 +15,7 @@ cont=$(buildah $AUTH from $IMG_STREAM:mesher-$IMG_SUFFIX)
 buildah run $cont bash -c 'echo "$(date) | Using BUILDAH --volume to build the solver  ..." >> /app/oc.build.log'
 
 CACHE_NAME=cache/${SPECFEM_MPI_NPROC}proc/${SPECFEM_NEX}nex/
+mkdir -p "/mnt/shared/$CACHE_NAME"
 
 buildah run --volume /mnt/shared/$CACHE_NAME:/mnt/shared/:rw,z $cont bash -c '\
         echo "$(date) | Building the solver ..." >> /app/oc.build.log && \

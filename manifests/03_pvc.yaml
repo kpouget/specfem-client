@@ -11,7 +11,7 @@ spec:
   {{ if eq .App.Spec.Exec.Nproc 1 }}
   - ReadWriteOnce
   {{ else }}
-  - ReadWriteMany
+  - ReadWriteOnce
   {{ end }}
   resources:
     requests:

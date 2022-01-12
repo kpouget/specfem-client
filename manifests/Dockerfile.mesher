@@ -17,8 +17,6 @@ RUN echo "$(date) | Configuring Specfem DATA/Par_file from env ..." >> /app/oc.b
  && sed -i -e 's/GENCODE = .*/GENCODE = $(GENCODE_70) $(FC_DEFINE)GPU_DEVICE_Ampere/g' /app/Makefile \
  && echo "$SPECFEM_NVCC" >> /app/Makefile
 
-
-
 RUN echo "$(date) | Building the mesher ..." >> /app/oc.build.log \
  && cd /app \
  && make mesh \
