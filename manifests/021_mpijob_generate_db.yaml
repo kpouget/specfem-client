@@ -1,0 +1,73 @@
+apiVersion: kubeflow.org/v2beta1
+kind: MPIJob
+metadata:
+  name: mpi-generate-db
+spec:
+  sshAuthMountPath: /home/mpi/.ssh
+  cleanPodPolicy: Running
+  slotsPerWorker: {{ .App.Spec.Exec.SlotsPerWorker }}
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      template:
+        spec:
+          initContainers:
+          - name: wait-hostfilename
+            image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:base
+            command:
+            - bash
+            - -cx
+            - "[[ $(cat /etc/mpi/discover_hosts.sh | wc -l) != 1 ]] && (date; echo Ready; cat /etc/mpi/discover_hosts.sh) || (date; echo 'not ready ...'; sleep 10; exit 1) && while read host; do while ! ssh $host echo $host ; do date; echo \"Pod $host is not up ...\"; sleep 10; done; date; echo \"Pod $host is ready\"; done <<< \"$(/etc/mpi/discover_hosts.sh)\""
+            volumeMounts:
+            - mountPath: /etc/mpi
+              name: mpi-job-config
+            - mountPath: /home/mpi/.ssh
+              name: ssh-auth
+          restartPolicy: Always
+          containers:
+          - name: mpi-launcher
+            command:
+            - mpirun
+            - -np
+            - "{{ .App.Spec.Exec.Nproc }}"
+            - -bind-to
+            - none
+            - -map-by
+            - slot
+            - -mca
+            - pml
+            - ob1
+            - -mca
+            - btl
+            - ^openib
+            - env
+            - OMP_NUM_THREADS={{ .App.Spec.Exec.Ncore }}
+            - SPECFEM_RELY_ON_SHARED_FS={{ .App.Spec.Resources.RelyOnSharedFS }}
+            - SPECFEM_NEX={{ .App.Spec.Specfem.Nex }}
+            - SPECFEM_MPI_NPROC={{ .App.Spec.Exec.Nproc }}
+            - SHARED_VOLUME=/mnt/shared/
+            - bash
+            - /mnt/helper/run_generate_db.sh
+            image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:base
+    Worker:
+      replicas: {{ .App.Spec.Exec.Nproc }}
+      template:
+        spec:
+          containers:
+          - name: cnt
+            image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:project
+            volumeMounts:
+            - mountPath: /mnt/shared/
+              name: shared-volume
+            - mountPath: /mnt/helper/run_generate_db.sh
+              name: run-generate-db-sh
+              readOnly: true
+              subPath: run_generate_db.sh
+          volumes:
+          - name: shared-volume
+            persistentVolumeClaim:
+              claimName: specfem
+          - configMap:
+              defaultMode: 511
+              name: run-generate-db-sh
+            name: run-generate-db-sh

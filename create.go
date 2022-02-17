@@ -15,7 +15,6 @@ import (
 	specfemv1 "github.com/openshift-psap/specfem-client/apis/specfem/v1alpha1"
 	"github.com/openshift-psap/specfem-client/yamlutil"
 
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -23,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"sigs.k8s.io/yaml"
-
 )
 
 type ResourceCreator func(app *specfemv1.SpecfemApp)(schema.GroupVersionResource, string, runtime.Object)
@@ -72,42 +70,42 @@ func applyTemplate(yamlSpec *[]byte, templateFct YamlResourceTmpl, app *specfemv
 	return nil
 }
 
-func createFromYamlManifest(yamlManifest string, templateFct YamlResourceTmpl, app *specfemv1.SpecfemApp) (schema.GroupVersionResource, *unstructured.Unstructured, error) {
+func createFromYamlManifest(yamlManifest string, templateFct YamlResourceTmpl, app *specfemv1.SpecfemApp) ([]byte, schema.GroupVersionResource, *unstructured.Unstructured, error) {
 	namespace := app.ObjectMeta.Namespace
 	scanner := yamlutil.NewYAMLScanner([]byte(manifests[yamlManifest]))
 
 	if !scanner.Scan() {
 		if err := scanner.Err(); err != nil {
-			return schema.GroupVersionResource{}, nil, errs.Wrap(err, "Failed to scan manifest ")
+			return []byte{}, schema.GroupVersionResource{}, nil, errs.Wrap(err, "Failed to scan manifest ")
 		}
-		return schema.GroupVersionResource{}, nil, fmt.Errorf("YAML empty document")
+		return []byte{}, schema.GroupVersionResource{}, nil, fmt.Errorf("YAML empty document")
 	}
 
 	yamlSpec := scanner.Bytes()
 
 	if scanner.Scan() {
-		return schema.GroupVersionResource{}, nil, fmt.Errorf("Cannot have multiple YAML in one file")
+		return []byte{}, schema.GroupVersionResource{}, nil, fmt.Errorf("Cannot have multiple YAML in one file")
 	}
 
 	if err := applyTemplate(&yamlSpec, templateFct, app); err != nil {
-		return schema.GroupVersionResource{}, nil, errs.Wrap(err, "Cannot inject runtime information")
+		return []byte{}, schema.GroupVersionResource{}, nil, errs.Wrap(err, "Cannot inject runtime information")
 	}
 	// apply twice as file may be inject in the file run
 	if err := applyTemplate(&yamlSpec, templateFct, app); err != nil {
-		return schema.GroupVersionResource{}, nil, errs.Wrap(err, "Cannot inject runtime information")
+		return []byte{}, schema.GroupVersionResource{}, nil, errs.Wrap(err, "Cannot inject runtime information")
 	}
 
 	obj := &unstructured.Unstructured{}
 	jsonSpec, err := yaml.YAMLToJSON(yamlSpec)
 	if err != nil {
-		return schema.GroupVersionResource{}, nil, errs.Wrap(err, "Could not convert yaml file to json "+string(yamlSpec))
+		return []byte{}, schema.GroupVersionResource{}, nil, errs.Wrap(err, "Could not convert yaml file to json "+string(yamlSpec))
 	}
 
 	if err = obj.UnmarshalJSON(jsonSpec); err != nil {
-		return schema.GroupVersionResource{}, nil, errs.Wrap(err, "Cannot unmarshall json spec, check your manifests")
+		return []byte{}, schema.GroupVersionResource{}, nil, errs.Wrap(err, "Cannot unmarshall json spec, check your manifests")
 	}
 
-	if obj.GetNamespace() == "" {
+	if obj.GetNamespace() == "" && obj.GetKind() != "Namespace"{
 		obj.SetNamespace(namespace)
 	}
 
@@ -117,12 +115,12 @@ func createFromYamlManifest(yamlManifest string, templateFct YamlResourceTmpl, a
 		Resource: strings.ToLower(obj.GetKind()) + "s",
 	}
 
-	return resType, obj, nil
+	return yamlSpec, resType, obj, nil
 }
 
 func CleanupJobPods(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec) error {
 	yamlManifest, templateFct := yamlSpecFct()
-	_, obj, err := createFromYamlManifest(yamlManifest, templateFct, app)
+	_, _, obj, err := createFromYamlManifest(yamlManifest, templateFct, app)
 	if err != nil {
 		return errs.Wrap(err, fmt.Sprintf("Cannot create the YAML resource from Yaml file '%+v'", yamlManifest))
 	}
@@ -151,10 +149,12 @@ func CleanupJobPods(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec) err
 func CreateYamlResource(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec, stage string) (string, error) {
 	yamlManifest, templateFct := yamlSpecFct()
 
-	resType, obj, err := createFromYamlManifest(yamlManifest, templateFct, app)
+	yamlContent, resType, obj, err := createFromYamlManifest(yamlManifest, templateFct, app)
 	if err != nil {
 		return "", errs.Wrap(err, fmt.Sprintf("Cannot create the YAML resource from Yaml file '%+v'", yamlManifest))
 	}
+
+	SaveArtifact(app, "src", yamlManifest, yamlContent)
 
 	objName := obj.GetName()
 
@@ -245,7 +245,7 @@ func CreateAndWaitYamlBuildConfig(app *specfemv1.SpecfemApp, yamlSpecFct YamlRes
 func CheckImageTag(imagetagName string, stage string) error {
 	var err error = nil
 	var gvr = imagestreamtagResource
-	var objDesc = "imagestreamtag/"+imagetagName
+	var objDesc = "ImageStreamTag/"+imagetagName
 
 	if delete_mode {
 		if to_delete[stage] {

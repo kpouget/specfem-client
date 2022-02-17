@@ -4,7 +4,6 @@ metadata:
   name: specfem-sample
   namespace: specfem
 spec:
-  namespace: specfem
   exec:
     ncore: 16
     nproc: 4
@@ -16,10 +15,10 @@ spec:
     multus:
       mainNic: enp1s0f1
     networkType: Default
-    relyOnSharedFS: true
-    storageClassName:
+    relyOnSharedFS: 'True'
+    storageClassName: ocs-external-storagecluster-cephfs
     useUbiImage: true
     workerNodeSelector:
       node-role.kubernetes.io/worker: null
   specfem:
-    nex: 16
+    nex: 64

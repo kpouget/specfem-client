@@ -5,7 +5,7 @@ metadata:
     app: specfem
   name: save-solver-output
 spec:
-  backoffLimit: 6
+  backoffLimit: 1
   completions: 1
   parallelism: 1
   template:
@@ -15,17 +15,18 @@ spec:
       name: save-solver-output
     spec:
       containers:
-      - command:
-        - bash 
-        - -c 
-        - "CACHE_NAME=cache/${SPECFEM_MPI_NPROC}proc/${SPECFEM_NEX}nex; cat /mnt/shared/${CACHE_NAME}/OUTPUT_FILES/output_solver.txt"
+      - name: cnt
+        command:
+        - bash
+        - -c
+        - "ls $SHARED_VOLUME"
         env:
-        - name: SPECFEM_NEX
-          value: "{{ .App.Spec.Specfem.Nex }}"
-        - name: SPECFEM_MPI_NPROC
-          value: "{{ .App.Spec.Exec.Nproc }}"
-        image: docker.io/centos:7
-        name: save-solver-output
+        - name: SHARED_VOLUME
+          value: /mnt/shared/
+        volumeMounts:
+        - mountPath: /mnt/shared/
+          name: shared-volume
+        image: registry.access.redhat.com/ubi8/ubi
         volumeMounts:
         - mountPath: /mnt/shared/
           name: shared-volume

@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app: specfem
+  name: run-setup-symlinks
+spec:
+  activeDeadlineSeconds: 150
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      name: run-setup-symlinks
+      labels:
+        app: specfem
+    spec:
+      containers:
+      - name: run
+        image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:project
+        imagePullPolicy: Always
+        command:
+        - bash
+        - /mnt/helper/run_setup_symlinks.sh
+        env:
+        - name: SHARED_VOLUME
+          value: /mnt/shared/
+        volumeMounts:
+        - mountPath: /mnt/shared/
+          name: shared-volume
+        - mountPath: /mnt/helper/run_setup_symlinks.sh
+          name: run-setup-symlinks-sh
+          readOnly: true
+          subPath: run_setup_symlinks.sh
+        buildah.specfem.build:
+      restartPolicy: Never
+      volumes:
+      - name: shared-volume
+        persistentVolumeClaim:
+          claimName: specfem
+      - configMap:
+          defaultMode: 511
+          name: run-setup-symlinks-sh
+        name: run-setup-symlinks-sh

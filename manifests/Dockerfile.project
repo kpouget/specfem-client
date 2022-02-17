@@ -1,0 +1,3 @@
+FROM specfem:specfem
+
+RUN cd /app && touch PROJECT

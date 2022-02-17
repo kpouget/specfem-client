@@ -1,19 +1,15 @@
 apiVersion: kubeflow.org/v2beta1
 kind: MPIJob
 metadata:
-  name: mpi-{{ .Cfg.MesherSolver.Stage }}
+  name: mpi-solver
 spec:
+  sshAuthMountPath: /home/mpi/.ssh
   cleanPodPolicy: Running
   slotsPerWorker: {{ .App.Spec.Exec.SlotsPerWorker }}
   mpiReplicaSpecs:
     Launcher:
       replicas: 1
       template:
-{{ if eq .App.Spec.Resources.NetworkType "Multus" }}
-        metadata:
-          annotations:
-            k8s.v1.cni.cncf.io/networks: multus-network
-{{ end }}
         spec:
           initContainers:
           - name: wait-hostfilename
@@ -25,14 +21,13 @@ spec:
             volumeMounts:
             - mountPath: /etc/mpi
               name: mpi-job-config
-            - mountPath: /root/.ssh
+            - mountPath: /home/mpi/.ssh
               name: ssh-auth
           restartPolicy: Always
           containers:
           - name: mpi-launcher
             command:
             - mpirun
-            - --allow-run-as-root
             - -np
             - "{{ .App.Spec.Exec.Nproc }}"
             - -bind-to
@@ -45,65 +40,34 @@ spec:
             - -mca
             - btl
             - ^openib
-{{ if eq .App.Spec.Resources.NetworkType "Multus" -}}
-            - -mca
-            - btl_tcp_if_include
-            - net1
-{{- end }}
             - env
             - OMP_NUM_THREADS={{ .App.Spec.Exec.Ncore }}
             - SPECFEM_RELY_ON_SHARED_FS={{ .App.Spec.Resources.RelyOnSharedFS }}
             - SPECFEM_NEX={{ .App.Spec.Specfem.Nex }}
             - SPECFEM_MPI_NPROC={{ .App.Spec.Exec.Nproc }}
+            - SHARED_VOLUME=/mnt/shared/
             - bash
-            - /mnt/helper/run.sh
+            - /mnt/helper/run_solver.sh
             image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:base
-            imagePullPolicy: Always
-{{ if eq .App.Spec.Resources.NetworkType "HostNetwork" }}
-            hostNetwork: true
-{{ end }}
     Worker:
-      replicas: {{ .Cfg.MesherSolver.Nreplicas  }}
+      replicas: {{ .App.Spec.Exec.Nproc }}
       template:
-{{ if eq .App.Spec.Resources.NetworkType "Multus" }}
-        metadata:
-          annotations:
-            k8s.v1.cni.cncf.io/networks: multus-network
-{{ end }}
         spec:
           containers:
-          - name: mpi-worker
-            image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:{{ .Cfg.MesherSolver.Image }}
-            imagePullPolicy: Always
-{{ if eq .App.Spec.Resources.NetworkType "HostNetwork" }}
-            hostNetwork: true
-{{ end }}
-            securityContext:
-              privileged: true
+          - name: cnt
+            image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:project
             volumeMounts:
             - mountPath: /mnt/shared/
               name: shared-volume
-            - mountPath: /mnt/helper/run.sh
-              name: run-sh
+            - mountPath: /mnt/helper/run_solver.sh
+              name: run-solver-sh
               readOnly: true
-              subPath: run_{{ .Cfg.MesherSolver.Stage }}.sh
-{{ if .App.Spec.Resources.Requests }}
-            resources:
-              limits: {{ range $key, $value := .App.Spec.Resources.Requests }}
-                {{ $key }}: {{ $value | qte }}
-{{ end }}
-              requests: {{ range $key, $value := .App.Spec.Resources.Requests }}
-                {{ $key }}: {{ $value | qte }}
-{{ end }}
-{{ end }}
-          nodeSelector: {{ range $key, $value := .App.Spec.Resources.WorkerNodeSelector }}
-            {{ $key }}: {{ $value }}
-{{ end }}
+              subPath: run_solver.sh
           volumes:
           - name: shared-volume
             persistentVolumeClaim:
               claimName: specfem
           - configMap:
               defaultMode: 511
-              name: run-{{ .Cfg.MesherSolver.Stage }}-sh
-            name: run-sh
+              name: run-solver-sh
+            name: run-solver-sh

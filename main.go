@@ -8,10 +8,8 @@ import (
 )
 
 var DELETE_KEYS = []string{
+	"---",
 	"all",
-	"cache",
-	"mesher",
-	"solver",
 }
 var delete_mode = false
 
@@ -80,4 +78,52 @@ func main() {
 	}
 
 	log.Println("Done :)")
+}
+
+
+func RunSpecfem(app *specfemv1.SpecfemApp) error {
+
+	if err := PrepareNamespace(app); err != nil {
+		return err
+	}
+
+	if err := CreateBaseImage(app); err != nil {
+		return err
+	}
+
+	if err := CreateSpecfemImage(app); err != nil {
+		return err
+	}
+
+	if err := CreateProjectImage(app); err != nil {
+		return err
+	}
+
+	/* --- */
+
+	if err := RunDecomposeMesherJob(app); err != nil {
+		return err
+	}
+
+	if err := RunGenerateDbMpiJob(app); err != nil {
+		return err
+	}
+
+	if err := RunSetupSymlinksJob(app); err != nil {
+		return err
+	}
+
+	if err := RunSolverMpiJob(app); err != nil {
+		return err
+	}
+
+	/* --- */
+
+	if err := RunSaveSolverOutput(app); err != nil {
+		return err
+	}
+
+	log.Println("All done!")
+
+	return nil
 }

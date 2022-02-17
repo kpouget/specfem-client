@@ -1,9 +1,9 @@
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
-  name: specfem-base-image
   labels:
-    application: specfem
+    app: specfem
+  name: base-image
 spec:
   strategy:
     type: Docker

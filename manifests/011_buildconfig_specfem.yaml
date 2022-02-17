@@ -1,0 +1,27 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  labels:
+    app: specfem
+  name: specfem-image
+spec:
+  strategy:
+    type: Docker
+    dockerStrategy:
+      from:
+        kind: ImageStreamTag
+        name: specfem:base
+      env:
+      - name: SPECFEM_GIT_REPO
+        value: {{ .App.Spec.Git.Uri }}
+      - name: SPECFEM_GIT_BRANCH
+        value: {{ .App.Spec.Git.Ref }}
+  source:
+    dockerfile: |
+      {{ index .Manifests "Dockerfile.specfem" | indent 8 }}
+  output:
+    to:
+      kind: ImageStreamTag
+      name: specfem:specfem
+  triggers:
+  - type: ConfigChange
