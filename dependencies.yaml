@@ -1,0 +1,53 @@
+---
+name: cluster_is_prepared
+spec:
+  requirements:
+  - has_mpi_operator
+  - in_specfem_namespace
+---
+name: has_mpi_operator
+spec:
+  tests:
+  - name: has_mpi_crd
+    type: shell
+    spec: oc get -oname crd/mpijobs.kubeflow.org
+  install:
+  - name: install_mpi_operator
+    type: shell
+    spec: |
+      oc apply -f \
+         https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.3.0/deploy/v2beta1/mpi-operator.yaml
+  - name: Fix MPI-Operator image
+    type: shell
+    spec: |
+      oc set image deployment.apps/mpi-operator \
+                   mpi-operator=docker.io/mpioperator/mpi-operator:0.3.0 \
+                   -n mpi-operator
+---
+name: has_volcano
+spec:
+  tests:
+  - name: has_podgroupd_crd
+    type: shell
+    spec: oc get -oname crd/podgroups.scheduling.volcano.sh
+  install:
+  - name: install_volcano
+    type: shell
+    spec: |
+      oc apply -f \
+         https://raw.githubusercontent.com/volcano-sh/volcano/master/installer/volcano-development.yaml
+---
+name: in_specfem_namespace
+spec:
+  tests:
+  - name: in_specfem_namespace
+    type: shell
+    spec: 'test "$(oc project -q)" == specfem'
+  install:
+  - name: goto_mpi_namespace
+    type: shell
+    spec: |
+      oc new-project specfem 2>/dev/null
+      oc project -q specfem
+      oc adm policy add-scc-to-user privileged -z default
+      oc adm policy add-scc-to-user anyuid -z default
