@@ -5,23 +5,20 @@ metadata:
   namespace: specfem
 spec:
   exec:
-    ncore: 32
+    ncore: 16
     nproc: 4
-    slotsPerWorker: 4
+    slotsPerWorker: 2
   git:
     ref: master
     uri: https://gitlab.com/kpouget_psap/specfem3d_globe.git
   resources:
+    multus:
+      mainNic: enp1s0f1
     networkType: Default
-    relyOnSharedFS: 'false'
-    storageClassName: local-store
+    relyOnSharedFS: true
+    storageClassName:
     useUbiImage: true
     workerNodeSelector:
-      kubernetes.io/hostname: perf23-nva100
       node-role.kubernetes.io/worker: null
-    requests:
-      nvidia.com/gpu: 4
   specfem:
-    nex: 64
-    gpuPlatform: NVIDIA
-    gpuDevice: '*'
+    nex: 16
