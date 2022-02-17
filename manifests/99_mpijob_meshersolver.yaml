@@ -45,11 +45,11 @@ spec:
             - -mca
             - btl
             - ^openib
-{{ if eq .App.Spec.Resources.NetworkType "Multus" }}
+{{ if eq .App.Spec.Resources.NetworkType "Multus" -}}
             - -mca
             - btl_tcp_if_include
             - net1
-{{ end }}
+{{- end }}
             - env
             - OMP_NUM_THREADS={{ .App.Spec.Exec.Ncore }}
             - SPECFEM_RELY_ON_SHARED_FS={{ .App.Spec.Resources.RelyOnSharedFS }}
