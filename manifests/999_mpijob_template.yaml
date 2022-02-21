@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v2beta1
 kind: MPIJob
 metadata:
-  name: mpi-solver
+  name: mpi-{{ .Cfg.Job.Name }}
 spec:
   sshAuthMountPath: /home/mpi/.ssh
   cleanPodPolicy: Running
@@ -42,12 +42,9 @@ spec:
             - ^openib
             - env
             - OMP_NUM_THREADS={{ .App.Spec.Exec.Ncore }}
-            - SPECFEM_RELY_ON_SHARED_FS={{ .App.Spec.Resources.RelyOnSharedFS }}
-            - SPECFEM_NEX={{ .App.Spec.Specfem.Nex }}
-            - SPECFEM_MPI_NPROC={{ .App.Spec.Exec.Nproc }}
-            - SHARED_VOLUME=/mnt/shared/
+            - DATA_DIR=/mnt/shared
             - bash
-            - /mnt/helper/run_solver.sh
+            - /mnt/helper/{{ .Cfg.Job.Entrypoint }}
             image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:base
     Worker:
       replicas: {{ .App.Spec.Exec.Nproc }}
@@ -59,15 +56,15 @@ spec:
             volumeMounts:
             - mountPath: /mnt/shared/
               name: shared-volume
-            - mountPath: /mnt/helper/run_solver.sh
-              name: run-solver-sh
+            - mountPath: /mnt/helper/{{ .Cfg.Job.Entrypoint }}
+              name: {{ .Cfg.Job.ConfigMap }}
               readOnly: true
-              subPath: run_solver.sh
+              subPath: {{ .Cfg.Job.Entrypoint }}
           volumes:
           - name: shared-volume
             persistentVolumeClaim:
               claimName: specfem
           - configMap:
               defaultMode: 511
-              name: run-solver-sh
-            name: run-solver-sh
+              name: {{ .Cfg.Job.ConfigMap }}
+            name: {{ .Cfg.Job.ConfigMap }}

@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   labels:
     app: specfem
-  name: {{ .Cfg.ConfigMaps.HelperFile.ManifestName | escape "." "-" | escape "_" "-" }}
+  name: {{ .Cfg.ConfigMap.Name }}
 data:
-  {{ .Cfg.ConfigMaps.HelperFile.ManifestName }} : |
-    {{ index .Manifests .Cfg.ConfigMaps.HelperFile.ManifestName | indent 4 }}
+  {{ .Cfg.ConfigMap.Filename }} : |
+    {{ index .Manifests .Cfg.ConfigMap.Filename | indent 4 }}

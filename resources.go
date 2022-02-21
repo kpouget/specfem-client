@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	specfemv1 "github.com/openshift-psap/specfem-client/apis/specfem/v1alpha1"
 )
@@ -23,19 +24,14 @@ var NAMESPACE = ""
 var USE_UBI_BASE_IMAGE = true
 
 type TemplateCfg struct {
-	ConfigMaps struct {
-		HelperFile struct {
-			ConfigMapName string
-			ManifestName string
-		}
+	ConfigMap struct {
+		Name string
+		Filename string
 	}
-	SecretNames struct {
-		DockerCfgPush string
-	}
-	MesherSolver struct {
-		Stage string
-		Image string
-		Nreplicas int
+	Job struct {
+		Name string
+		ConfigMap string
+		Entrypoint string
 	}
 	BaseImage struct {
 		Image string
@@ -83,46 +79,66 @@ func yamlProjectImageBuildConfig() (string, YamlResourceTmpl) {
 	return "012_buildconfig_project.yaml", NoTemplateCfg
 }
 
-func yamlRunDecomposeMesherJob() (string, YamlResourceTmpl) {
-	return "020_job_decompose_mesh.yaml", NoTemplateCfg
+type ImageResource struct {
+	Image string
+	YamlSpec YamlResourceSpec
 }
 
-func yamlRunGenerateDbMpiJob() (string, YamlResourceTmpl) {
-	return "021_mpijob_generate_db.yaml", NoTemplateCfg
+var ImageResources = []ImageResource{
+	ImageResource{"specfem:base", yamlBaseImageBuildConfig},
+	ImageResource{"specfem:specfem", yamlSpecfemImageBuildConfig},
+	ImageResource{"specfem:project", yamlProjectImageBuildConfig},
 }
 
-func yamlRunSetupSymlinksJob() (string, YamlResourceTmpl) {
-	return "022_job_setup_symlinks.yaml", NoTemplateCfg
+type StageResource struct {
+	Stage string
+	RunFunction func(app *specfemv1.SpecfemApp, filename, stage string) error
+	Script string
 }
 
-func yamlRunSolverMpiJob() (string, YamlResourceTmpl) {
-	return "023_mpijob_solver.yaml", NoTemplateCfg
+var StageResources = []StageResource{
+	StageResource{"decompose", RunScriptJob, "run_decompose_mesher.sh"},
+	StageResource{"generate-db", RunScriptMpiJob, "run_mpi_generate_db.sh"},
+	StageResource{"setup-symlinks", RunScriptJob, "run_setup_symlinks.sh"},
+	StageResource{"solver", RunScriptMpiJob, "run_mpi_solver.sh"},
 }
 
-func yamlSaveSolverOutputJob() (string, YamlResourceTmpl) {
-	return "030_job_save-solver-output.yaml", NoTemplateCfg
-}
+// --- //
 
-func yamlDecomposeMeshScript() (string, YamlResourceTmpl) {
-	return yamlFileConfigMap("run_decompose_mesh.sh")
-}
-
-func yamlGenerateDbScript() (string, YamlResourceTmpl) {
-	return yamlFileConfigMap("run_generate_db.sh")
-}
-
-func yamlSetupSymlinksScript() (string, YamlResourceTmpl) {
-	return yamlFileConfigMap("run_setup_symlinks.sh")
-}
-
-func yamlSolverScript() (string, YamlResourceTmpl) {
-	return yamlFileConfigMap("run_solver.sh")
-}
-
-func yamlFileConfigMap(filename string) (string, YamlResourceTmpl) {
+func yamlSingleFileConfigMap(filename string) (string, YamlResourceTmpl) {
 	return "999_configmap_file.yaml", func(app *specfemv1.SpecfemApp) *TemplateCfg {
 		cfg := &TemplateCfg{}
-		cfg.ConfigMaps.HelperFile.ManifestName = filename
+
+		cfg.ConfigMap.Name = stringToName(filename)
+		cfg.ConfigMap.Filename = filename
 		return cfg
 	}
+}
+
+func yamlScriptJob(filename string) (string, YamlResourceTmpl) {
+	return "999_job_template.yaml", func(app *specfemv1.SpecfemApp) *TemplateCfg {
+		cfg := &TemplateCfg{}
+
+		cfg.Job.Entrypoint = filename
+		cfg.Job.ConfigMap = stringToName(filename)
+		cfg.Job.Name = strings.TrimSuffix(cfg.Job.ConfigMap, "-sh")
+
+		return cfg
+	}
+}
+
+func yamlMpiScriptJob(filename string) (string, YamlResourceTmpl) {
+	return "999_mpijob_template.yaml", func(app *specfemv1.SpecfemApp) *TemplateCfg {
+		cfg := &TemplateCfg{}
+
+		cfg.Job.Entrypoint = filename
+		cfg.Job.ConfigMap = stringToName(filename)
+		cfg.Job.Name = strings.TrimSuffix(cfg.Job.ConfigMap, "-sh")
+
+		return cfg
+	}
+}
+
+func stringToName(str string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(str, "_", "-"), ".", "-")
 }

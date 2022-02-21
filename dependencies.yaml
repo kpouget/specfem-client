@@ -49,5 +49,4 @@ spec:
     spec: |
       oc new-project specfem 2>/dev/null
       oc project -q specfem
-      oc adm policy add-scc-to-user privileged -z default
-      oc adm policy add-scc-to-user anyuid -z default
+

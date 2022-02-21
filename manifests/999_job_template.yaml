@@ -3,15 +3,15 @@ kind: Job
 metadata:
   labels:
     app: specfem
-  name: run-setup-symlinks
+  name: {{ .Cfg.Job.Name }}
 spec:
   activeDeadlineSeconds: 150
-  backoffLimit: 1
+  backoffLimit: 0
   completions: 1
   parallelism: 1
   template:
     metadata:
-      name: run-setup-symlinks
+      name: {{ .Cfg.Job.Name }}
       labels:
         app: specfem
     spec:
@@ -21,17 +21,17 @@ spec:
         imagePullPolicy: Always
         command:
         - bash
-        - /mnt/helper/run_setup_symlinks.sh
+        - /mnt/helper/{{ .Cfg.Job.Entrypoint }}
         env:
-        - name: SHARED_VOLUME
-          value: /mnt/shared/
+        - name: DATA_DIR
+          value: /mnt/shared
         volumeMounts:
         - mountPath: /mnt/shared/
           name: shared-volume
-        - mountPath: /mnt/helper/run_setup_symlinks.sh
-          name: run-setup-symlinks-sh
+        - mountPath: /mnt/helper/{{ .Cfg.Job.Entrypoint }}
+          name: {{ .Cfg.Job.ConfigMap }}
           readOnly: true
-          subPath: run_setup_symlinks.sh
+          subPath: {{ .Cfg.Job.Entrypoint }}
         buildah.specfem.build:
       restartPolicy: Never
       volumes:
@@ -40,5 +40,5 @@ spec:
           claimName: specfem
       - configMap:
           defaultMode: 511
-          name: run-setup-symlinks-sh
-        name: run-setup-symlinks-sh
+          name: {{ .Cfg.Job.ConfigMap }}
+        name: {{ .Cfg.Job.ConfigMap }}

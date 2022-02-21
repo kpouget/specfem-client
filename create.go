@@ -154,7 +154,7 @@ func CreateYamlResource(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec,
 		return "", errs.Wrap(err, fmt.Sprintf("Cannot create the YAML resource from Yaml file '%+v'", yamlManifest))
 	}
 
-	SaveArtifact(app, "src", yamlManifest, yamlContent)
+	SaveArtifact(app, "src", strings.ToLower(obj.GetKind()) + "_" + obj.GetName() + ".yaml" , yamlContent)
 
 	objName := obj.GetName()
 
@@ -166,7 +166,7 @@ func CreateResource(app *specfemv1.SpecfemApp,
 	resType, objName, obj:= creatorFunction(app)
 
 	if _, ok := to_delete[stage]; !ok {
-		msg := fmt.Sprintf("Invalid stage '%v' for object %s/%s | %q", stage, resType, objName, to_delete)
+		msg := fmt.Sprintf("Invalid stage '%s' for object %s/%s | %q", stage, resType, objName)
 		if delete_mode {
 			return "", fmt.Errorf(msg)
 		} else {

@@ -31,57 +31,30 @@ func PrepareNamespace(app *specfemv1.SpecfemApp) error {
 	return nil
 }
 
-func CreateBaseImage(app *specfemv1.SpecfemApp) error {
-	return CreateImage(app, yamlBaseImageBuildConfig, "specfem:base", "all")
-}
-
-func CreateSpecfemImage(app *specfemv1.SpecfemApp) error {
-	return CreateImage(app, yamlSpecfemImageBuildConfig, "specfem:specfem", "all")
-}
-
-func CreateProjectImage(app *specfemv1.SpecfemApp) error {
-	return CreateImage(app, yamlProjectImageBuildConfig, "specfem:project", "all")
-}
-
-func RunDecomposeMesherJob(app *specfemv1.SpecfemApp) error {
-	if _, err := CreateYamlResource(app, yamlDecomposeMeshScript, "decompose"); err != nil {
-		return err
-	}
-
-	return RunSeqJob(app, yamlRunDecomposeMesherJob, "decompose")
-}
-
-func RunGenerateDbMpiJob(app *specfemv1.SpecfemApp) error {
-	if _, err := CreateYamlResource(app, yamlGenerateDbScript, "generate-db"); err != nil {
-		return err
-	}
-
-	return RunMpiJob(app, yamlRunGenerateDbMpiJob, "generate-db")
-}
-
-func RunSetupSymlinksJob(app *specfemv1.SpecfemApp) error {
-	if _, err := CreateYamlResource(app, yamlSetupSymlinksScript, "symlinks"); err != nil {
-		return err
-	}
-
-	return RunSeqJob(app, yamlRunSetupSymlinksJob, "symlinks")
-}
-
-func RunSolverMpiJob(app *specfemv1.SpecfemApp) error {
-	if _, err := CreateYamlResource(app, yamlSolverScript, "solver"); err != nil {
-		return err
-	}
-	return RunMpiJob(app, yamlRunSolverMpiJob, "solver")
-}
 
 func RunSaveSolverOutput(app *specfemv1.SpecfemApp) error {
-	jobName, err := CreateYamlResource(app, yamlSaveSolverOutputJob, "solver")
+	stage := "solver"
+	script_name := "run_save_solver_output.sh"
+
+	yamlConfigMap := func() (string, YamlResourceTmpl) {
+		return yamlSingleFileConfigMap(script_name)
+	}
+
+	yamlJob := func() (string, YamlResourceTmpl) {
+		return yamlScriptJob(script_name)
+	}
+
+	if _, err := CreateYamlResource(app, yamlConfigMap, stage); err != nil {
+		return err
+	}
+
+	jobName, err := CreateYamlResource(app, yamlJob, stage)
 	if err != nil {
 		return err
 	}
 
 	if delete_mode {
-		CleanupJobPods(app, yamlSaveSolverOutputJob)
+		CleanupJobPods(app, yamlJob)
 	}
 
 	if jobName == "" {
@@ -99,8 +72,7 @@ func RunSaveSolverOutput(app *specfemv1.SpecfemApp) error {
 
 	date_uid := time.Now().Format("20060102_150405")
 
-    SAVELOG_FILENAME := fmt.Sprintf("/tmp/specfem.solver-%dproc-%dcores-%dnex_%s.log",
-		app.Spec.Exec.Nproc, app.Spec.Exec.Ncore, app.Spec.Specfem.Nex, date_uid)
+    SAVELOG_FILENAME := fmt.Sprintf("/tmp/specfem_%s.log", date_uid)
 
 	output_f, err := os.Create(SAVELOG_FILENAME)
 
@@ -151,8 +123,21 @@ func HasMpiWorkerPods(app *specfemv1.SpecfemApp, stage string) (int, error) {
 	return len(pods.Items), nil
 }
 
-func RunSeqJob(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec, stage string) error {
-	jobName, err := CreateYamlResource(app, yamlSpecFct, stage)
+func RunScriptJob(app *specfemv1.SpecfemApp, script_name, stage string) error {
+	yamlConfigMap := func() (string, YamlResourceTmpl) {
+		return yamlSingleFileConfigMap(script_name)
+	}
+
+	yamlJob := func() (string, YamlResourceTmpl) {
+		return yamlScriptJob(script_name)
+	}
+
+	_, err := CreateYamlResource(app, yamlConfigMap, stage)
+	if err != nil {
+		return err
+	}
+
+	jobName, err := CreateYamlResource(app, yamlJob, stage)
 	if err != nil || jobName == "" {
 		return err
 	}
@@ -164,7 +149,20 @@ func RunSeqJob(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec, stage st
 	return nil
 }
 
-func RunMpiJob(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec, stage string) error {
+func RunScriptMpiJob(app *specfemv1.SpecfemApp, script_name, stage string) error {
+	yamlConfigMap := func() (string, YamlResourceTmpl) {
+		return yamlSingleFileConfigMap(script_name)
+	}
+
+	yamlMpiJob := func() (string, YamlResourceTmpl) {
+		return yamlMpiScriptJob(script_name)
+	}
+
+	_, err := CreateYamlResource(app, yamlConfigMap, stage)
+	if err != nil {
+		return err
+	}
+
 	if delete_mode {
 		goto skip_pod_check
 	}
@@ -184,7 +182,7 @@ func RunMpiJob(app *specfemv1.SpecfemApp, yamlSpecFct YamlResourceSpec, stage st
 	}
 
 skip_pod_check:
-	mpijobName, err := CreateYamlResource(app, yamlSpecFct, stage)
+	mpijobName, err := CreateYamlResource(app, yamlMpiJob, stage)
 	if err != nil || mpijobName == "" {
 		return err
 	}

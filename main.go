@@ -10,6 +10,10 @@ import (
 var DELETE_KEYS = []string{
 	"---",
 	"all",
+	"decompose",
+	"generate-db",
+	"setup-symlinks",
+	"solver",
 }
 var delete_mode = false
 
@@ -87,37 +91,17 @@ func RunSpecfem(app *specfemv1.SpecfemApp) error {
 		return err
 	}
 
-	if err := CreateBaseImage(app); err != nil {
-		return err
+	for _, resource := range ImageResources {
+		if err := CreateImage(app, resource.YamlSpec, resource.Image, "all"); err != nil {
+			return err
+		}
 	}
 
-	if err := CreateSpecfemImage(app); err != nil {
-		return err
+	for _, resource := range StageResources {
+		if err := resource.RunFunction(app, resource.Script, resource.Stage); err != nil {
+			return err
+		}
 	}
-
-	if err := CreateProjectImage(app); err != nil {
-		return err
-	}
-
-	/* --- */
-
-	if err := RunDecomposeMesherJob(app); err != nil {
-		return err
-	}
-
-	if err := RunGenerateDbMpiJob(app); err != nil {
-		return err
-	}
-
-	if err := RunSetupSymlinksJob(app); err != nil {
-		return err
-	}
-
-	if err := RunSolverMpiJob(app); err != nil {
-		return err
-	}
-
-	/* --- */
 
 	if err := RunSaveSolverOutput(app); err != nil {
 		return err

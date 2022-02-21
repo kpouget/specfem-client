@@ -3,4 +3,4 @@
 set -x
 
 echo Hello setup symlinks
-touch ${SHARED_VOLUME}/SETUP_SYMLINKS
+touch "${DATA_DIR}/SETUP_SYMLINKS"

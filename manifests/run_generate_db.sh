@@ -3,4 +3,4 @@
 set -x
 
 echo Hello Generate DB
-touch ${SHARED_VOLUME}/GENERATE_DB
+touch "${DATA_DIR}/GENERATE_DB"
