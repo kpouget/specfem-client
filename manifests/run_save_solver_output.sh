@@ -10,4 +10,4 @@ if [[ -z "${SPEC_PROJ_DIR:-}" ]]; then
     exit 1
 fi
 
-ls "$DATA_DIR"
+find "$SPEC_PROJ_DIR"
