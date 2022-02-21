@@ -3,5 +3,5 @@ FROM specfem:base
 RUN dnf install -y --quiet zlib-devel
 
 RUN git clone "$SPECFEM_GIT_REPO" -b "$SPECFEM_GIT_BRANCH" --depth 1 /app
-RUN cd /app git show --quiet | tee /app/.git_commit
-RUN cd /app && ./configure && make -j8 && rm -rf .git obj
+RUN cd /app && git show --quiet | tee .git_commit && rm -rf .git
+RUN cd /app && ./configure && make -j8 && rm -rf obj
