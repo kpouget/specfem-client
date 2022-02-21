@@ -72,3 +72,8 @@ func (c MyClient) Delete(gvr schema.GroupVersionResource, objName string) error 
 func (c MyClient) Get(gvr schema.GroupVersionResource, objName string) (*unstructured.Unstructured, error) {
 		return client.ClientSetDyn.Resource(gvr).Namespace(NAMESPACE).Get(context.TODO(), objName, metav1.GetOptions{})
 }
+
+func (c MyClient) Update(gvr schema.GroupVersionResource, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+
+	return client.ClientSetDyn.Resource(gvr).Namespace(NAMESPACE).Update(context.TODO(), obj, metav1.UpdateOptions{})
+}

@@ -43,6 +43,7 @@ spec:
             - env
             - OMP_NUM_THREADS={{ .App.Spec.Exec.Ncore }}
             - DATA_DIR=/mnt/shared
+            - SPEC_PROJ_DIR=/mnt/shared/project
             - bash
             - /mnt/helper/{{ .Cfg.Job.Entrypoint }}
             image: image-registry.openshift-image-registry.svc:5000/{{ .App.ObjectMeta.Namespace }}/specfem:base

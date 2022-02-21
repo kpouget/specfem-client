@@ -25,6 +25,10 @@ spec:
         env:
         - name: DATA_DIR
           value: /mnt/shared
+        - name: SPEC_PROJ_DIR
+          value: /mnt/shared/project
+        - name: APP_SPEC_EXEC_NPROC
+          value: "{{ .App.Spec.Exec.Nproc}}"
         volumeMounts:
         - mountPath: /mnt/shared/
           name: shared-volume

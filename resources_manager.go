@@ -18,12 +18,12 @@ func PrepareNamespace(app *specfemv1.SpecfemApp) error {
 		return errs.Wrap(err, "Cannot create resource for yamlNamespace")
 	}
 
-	_, err = CreateYamlResource(app, yamlImageStream, "all")
+	_, err = CreateYamlResource(app, yamlImageStream, "namespace")
 	if err != nil {
 		return errs.Wrap(err, "Cannot create resource for yamlImageStream")
 	}
 
-	_, err = CreateYamlResource(app, yamlPVC, "all")
+	_, err = CreateYamlResource(app, yamlPVC, "namespace")
 	if err != nil {
 		return errs.Wrap(err, "Cannot create resource for yamlPVC")
 	}

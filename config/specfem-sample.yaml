@@ -2,16 +2,16 @@ apiVersion: specfem.kpouget.psap/v1alpha1
 kind: SpecfemApp
 metadata:
   name: specfem-sample
-  namespace: specfem
+  namespace: test-specfem
 spec:
-  namespace: specfem
+  namespace: test-specfem
   exec:
     ncore: 16
     nproc: 4
     slotsPerWorker: 2
   git:
+    uri: https://github.com/geodynamics/specfem3d.git
     ref: master
-    uri: https://gitlab.com/kpouget_psap/specfem3d_globe.git
   resources:
     multus:
       mainNic: enp1s0f1

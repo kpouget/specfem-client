@@ -27,6 +27,7 @@ type TemplateCfg struct {
 	ConfigMap struct {
 		Name string
 		Filename string
+		Content string
 	}
 	Job struct {
 		Name string
@@ -97,7 +98,7 @@ type StageResource struct {
 }
 
 var StageResources = []StageResource{
-	StageResource{"decompose", RunScriptJob, "run_decompose_mesher.sh"},
+	StageResource{"decompose", RunScriptJob, "run_decompose_mesh.sh"},
 	StageResource{"generate-db", RunScriptMpiJob, "run_mpi_generate_db.sh"},
 	StageResource{"setup-symlinks", RunScriptJob, "run_setup_symlinks.sh"},
 	StageResource{"solver", RunScriptMpiJob, "run_mpi_solver.sh"},
@@ -106,11 +107,17 @@ var StageResources = []StageResource{
 // --- //
 
 func yamlSingleFileConfigMap(filename string) (string, YamlResourceTmpl) {
+	if _, ok := manifests[filename]; !ok {
+		panic("File '" + filename + "' not found in the manifest directory.")
+	}
+
 	return "999_configmap_file.yaml", func(app *specfemv1.SpecfemApp) *TemplateCfg {
 		cfg := &TemplateCfg{}
 
 		cfg.ConfigMap.Name = stringToName(filename)
 		cfg.ConfigMap.Filename = filename
+		cfg.ConfigMap.Content = manifests[filename]
+
 		return cfg
 	}
 }

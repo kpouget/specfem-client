@@ -6,4 +6,4 @@ metadata:
   name: {{ .Cfg.ConfigMap.Name }}
 data:
   {{ .Cfg.ConfigMap.Filename }} : |
-    {{ index .Manifests .Cfg.ConfigMap.Filename | indent 4 }}
+    {{ .Cfg.ConfigMap.Content | indent 4 }}

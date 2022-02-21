@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"text/template"
 	"log"
-	"math"
 	"strings"
 
 	errs "github.com/pkg/errors"
@@ -17,7 +16,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -47,15 +45,6 @@ func applyTemplate(yamlSpec *[]byte, templateFct YamlResourceTmpl, app *specfemv
 	fmap := template.FuncMap{
         "indent": func(len int, txt string) string {
 			return strings.ReplaceAll(txt, "\n", "\n"+strings.Repeat(" ", len))
-		},
-		"isqrt": func(n int32) int32 {
-			return int32(math.Sqrt(float64(n)))
-		},
-		"escape": func(src, dst string, txt string) string {
-			return strings.ReplaceAll(txt, src, dst)
-		},
-		"qte" : func(qte resource.Quantity) string {
-			return qte.String()
 		},
     }
 
@@ -166,7 +155,7 @@ func CreateResource(app *specfemv1.SpecfemApp,
 	resType, objName, obj:= creatorFunction(app)
 
 	if _, ok := to_delete[stage]; !ok {
-		msg := fmt.Sprintf("Invalid stage '%s' for object %s/%s | %q", stage, resType, objName)
+		msg := fmt.Sprintf("Invalid stage '%s' for object %s/%s", stage, resType, objName)
 		if delete_mode {
 			return "", fmt.Errorf(msg)
 		} else {
@@ -188,7 +177,7 @@ func CreateResource(app *specfemv1.SpecfemApp,
 func doCreateResource(resType schema.GroupVersionResource, obj *unstructured.Unstructured, objName string, stage string) (string, error) {
 
 	if _, ok := to_delete[stage]; !ok {
-		msg := fmt.Sprintf("Invalid stage '%v' for object %s/%s | %q", stage, resType, objName, to_delete)
+		msg := fmt.Sprintf("Invalid stage '%s' for object %s/%s", stage, resType, objName)
 		if delete_mode {
 			return "", fmt.Errorf(msg)
 		} else {
@@ -218,11 +207,19 @@ func doCreateResource(resType schema.GroupVersionResource, obj *unstructured.Uns
 
 	log.Printf("Create %s", objDesc)
 	err = client.Create(resType, obj)
-	if err != nil && !errors.IsAlreadyExists(err) {
-		log.Printf("Failed to create %s: %+v", objDesc, err)
-		return "", err
+	if err != nil {
+		if !errors.IsAlreadyExists(err) {
+			log.Printf("Failed to create %s: %+v", objDesc, err)
+			return "", err
+		}
+		if obj.GetKind() == "ConfigMap" {
+			_, err = client.Update(resType, obj)
+			if err != nil {
+				log.Printf("Failed to update %s: %+v", objDesc, err)
+				return "", err
+			}
+		}
 	}
-
 	return objName, nil
 }
 

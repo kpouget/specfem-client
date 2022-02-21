@@ -1,5 +1,7 @@
 FROM specfem:base
 
-#RUN git clone "$SPECFEM_GIT_REPO" -b "$SPECFEM_GIT_BRANCH" --depth 1 /app
+RUN dnf install -y --quiet zlib-devel
 
-RUN mkdir /app && echo "$(date) | Cloned '$SPECFEM_GIT_REPO' branch '$SPECFEM_GIT_BRANCH'" >> /app/SPECFEM
+RUN git clone "$SPECFEM_GIT_REPO" -b "$SPECFEM_GIT_BRANCH" --depth 1 /app
+RUN cd /app git show --quiet | tee /app/.git_commit
+RUN cd /app && ./configure && make -j8 && rm -rf .git obj

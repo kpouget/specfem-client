@@ -9,6 +9,7 @@ import (
 
 var DELETE_KEYS = []string{
 	"---",
+	"namespace",
 	"all",
 	"decompose",
 	"generate-db",
