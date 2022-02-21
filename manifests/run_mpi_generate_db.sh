@@ -28,7 +28,7 @@ exit 0
 
 cd "$SPEC_PROJ_DIR"
 
-./bin/xgenerate_databases
+/app/bin/xgenerate_databases
 
 if [[ "${PMIX_RANK}" == 0 ]]; then
     cp "$DATA_DIR/Par_file" "$DATA_DIR/gen_db.Par_file"
