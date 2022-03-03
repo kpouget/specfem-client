@@ -1,4 +1,4 @@
 FROM specfem:specfem
 
-RUN git clone https://github.com/code-cullison/gnam/ -b master /project
+RUN git clone https://github.com/code-cullison/pyaspect -b master /project
 RUN cd /project && git show --quiet | tee .git_commit && rm -rf .git
